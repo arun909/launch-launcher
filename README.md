@@ -8,7 +8,7 @@ personal use.
 
 ```bash
 flutter pub get
-flutter build apk --release        # signed with debug keys, fine for sideloading
+flutter build apk --release        # signed with your release key (see below)
 adb install -r build/app/outputs/flutter-apk/app-release.apk
 ```
 
@@ -18,6 +18,17 @@ Next, press the Home button. Android asks which launcher to use. Pick
 **Minimal Launcher** and choose **Always**. You can switch back later in
 *Launcher settings → Default home app* or in Android's Settings → Apps →
 Default apps → Home app.
+
+### Release signing
+
+Release builds are signed with `~/keys/minimal_launcher-release.jks`. The
+passwords are in `android/key.properties`, with a backup at
+`~/keys/minimal_launcher-key.properties.backup`. Both files are gitignored.
+
+**Back up `~/keys/` somewhere off this machine.** If the key is lost, the next
+build can't install over the old one. You'd have to uninstall first, which
+erases your hidden and pinned apps. Without `key.properties` (for example on
+a fresh clone), release builds fall back to the debug key.
 
 ## Using it
 
