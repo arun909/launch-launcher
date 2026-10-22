@@ -64,6 +64,9 @@ class LauncherPlatform {
   /// Opens Android's "Default home app" picker.
   Future<void> openHomeSettings() => _method.invokeMethod('openHomeSettings');
 
+  /// True if Android currently uses this app as the home screen.
+  Future<bool> isDefaultHome() async => await _method.invokeMethod<bool>('isDefaultHome') ?? false;
+
   Future<dynamic> _onNativeCall(MethodCall call) async {
     switch (call.method) {
       case 'onHomePressed':

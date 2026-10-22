@@ -19,6 +19,10 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    buildFeatures {
+        aidl = true // privileged/IPrivilegedService.aidl
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -65,4 +69,12 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Shizuku: lets the app run a few adb-level operations (disable/enable
+    // system apps) without root. https://github.com/RikkaApps/Shizuku-API
+    val shizukuVersion = "13.1.5"
+    implementation("dev.rikka.shizuku:api:$shizukuVersion")
+    implementation("dev.rikka.shizuku:provider:$shizukuVersion")
 }

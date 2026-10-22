@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/apps/home_role_controller.dart';
 import '../../core/models/app_info.dart';
 import '../../core/routing/app_routes.dart';
 import '../../core/widgets/app_icon.dart';
@@ -28,9 +29,10 @@ class HomeScreen extends StatelessWidget {
         .whereType<AppInfo>()
         .toList();
 
-    // A launcher's root must never pop: Back on home does nothing.
+    // As the home screen, Back does nothing. Opened as a normal app, it exits.
+    final isDefaultHome = context.watch<HomeRoleController>().isDefaultHome;
     return PopScope(
-      canPop: false,
+      canPop: !isDefaultHome,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: GestureDetector(

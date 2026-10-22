@@ -2,6 +2,7 @@ package com.arun.minimal_launcher
 
 import android.content.Intent
 import com.arun.minimal_launcher.platform.LauncherChannel
+import com.arun.minimal_launcher.platform.SystemAppsChannel
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 import io.flutter.embedding.engine.FlutterEngine
@@ -13,16 +14,21 @@ import io.flutter.embedding.engine.FlutterEngine
 class MainActivity : FlutterActivity() {
 
     private var launcherChannel: LauncherChannel? = null
+    private var systemAppsChannel: SystemAppsChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         launcherChannel = LauncherChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
+            .also { it.register() }
+        systemAppsChannel = SystemAppsChannel(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
             .also { it.register() }
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         launcherChannel?.unregister()
         launcherChannel = null
+        systemAppsChannel?.unregister()
+        systemAppsChannel = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
@@ -43,8 +49,9 @@ class MainActivity : FlutterActivity() {
 
     /**
      * Called when Flutter has nothing left to pop (e.g. SystemNavigator.pop()).
-     * A normal app would finish(); a launcher must never close itself, so we
-     * report the event as handled and do nothing.
+     * As the default home screen we must never close ourselves, so we report
+     * it as handled. Opened as a normal app, Back exits as usual.
      */
-    override fun popSystemNavigator(): Boolean = true
+    override fun popSystemNavigator(): Boolean =
+        LauncherChannel.isDefaultHome(this) || super.popSystemNavigator()
 }

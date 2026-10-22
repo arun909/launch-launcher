@@ -4,6 +4,7 @@ import '../../features/app_drawer/app_drawer_screen.dart';
 import '../../features/hidden_apps/hidden_apps_screen.dart';
 import '../../features/hidden_apps/manage_apps_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/system_apps/system_apps_screen.dart';
 
 /// Named routes. A new feature screen = one constant + one case here.
 /// The home screen is the Navigator's root (`MaterialApp.home`), not a route.
@@ -12,6 +13,7 @@ abstract final class AppRoutes {
   static const settings = '/settings';
   static const hiddenApps = '/settings/hidden-apps';
   static const manageApps = '/settings/hidden-apps/manage';
+  static const systemApps = '/settings/system-apps';
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -27,6 +29,8 @@ abstract final class AppRoutes {
         return MaterialPageRoute(settings: settings, builder: (_) => const HiddenAppsScreen());
       case manageApps:
         return MaterialPageRoute(settings: settings, builder: (_) => const ManageAppsScreen());
+      case systemApps:
+        return MaterialPageRoute(settings: settings, builder: (_) => const SystemAppsScreen());
     }
     return null;
   }

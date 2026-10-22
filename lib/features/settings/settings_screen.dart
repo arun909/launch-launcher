@@ -31,6 +31,13 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, AppRoutes.hiddenApps),
           ),
           ListTile(
+            leading: const Icon(Icons.block),
+            title: const Text('Disable system apps'),
+            subtitle: const Text('Removes them from every launcher · needs Shizuku'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.systemApps),
+          ),
+          ListTile(
             leading: const Icon(Icons.refresh),
             title: const Text('Reload app list & icons'),
             subtitle: const Text('Clears the cache and re-reads installed apps'),

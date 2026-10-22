@@ -3,7 +3,9 @@ package com.arun.minimal_launcher.platform
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -25,6 +27,7 @@ import java.util.concurrent.Executors
  *     launchApp({id})                            -> Boolean
  *     openAppInfo({packageName})                 -> null
  *     openHomeSettings()                         -> null  (system "default home app" picker)
+ *     isDefaultHome()                            -> Boolean (this app is the current home screen)
  *   Android -> Dart:
  *     onHomePressed()                            Home pressed while launcher is in front
  *
@@ -94,6 +97,8 @@ class LauncherChannel(
                 result.success(null)
             }
 
+            "isDefaultHome" -> result.success(isDefaultHome(context))
+
             else -> result.notImplemented()
         }
     }
@@ -120,6 +125,20 @@ class LauncherChannel(
     }
 
     companion object {
+        /** True if Android currently uses this app as the home screen. */
+        fun isDefaultHome(context: Context): Boolean {
+            val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.resolveActivity(
+                    home, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong())
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY)
+            }
+            return info?.activityInfo?.packageName == context.packageName
+        }
+
         const val METHOD_CHANNEL = "com.arun.minimal_launcher/launcher"
         const val EVENT_CHANNEL = "com.arun.minimal_launcher/package_events"
         private const val DEFAULT_ICON_PX = 192

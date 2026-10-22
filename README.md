@@ -45,6 +45,33 @@ a fresh clone), release builds fall back to the debug key.
 > screen, drawer and search. The app stays installed, can still run in the
 > background, and still shows in Android Settings.
 
+## Disable system apps (needs Shizuku)
+
+*Settings → Disable system apps* switches system apps off and on. Unlike
+hiding, this works in **every** launcher: a disabled app disappears and can't
+run until re-enabled. Nothing is deleted, and a factory reset re-enables
+everything.
+
+The app needs adb-level access for this, which it gets through
+[Shizuku](https://shizuku.rikka.app/) (free on the Play Store, no root):
+
+1. Install Shizuku, open it, and start it via **Wireless debugging**.
+   Shizuku has to be started again after every reboot.
+2. In this app's *Disable system apps* screen, tap **Grant permission**.
+
+Safety layers:
+- Apps are sorted into *Safe*, *Check first* and *Protected*
+  (`lib/features/system_apps/app_risk.dart`). Protected apps can't be switched
+  off from the UI.
+- The Kotlin side separately refuses a hard blocklist, any current default
+  app (home, phone, SMS, browser, keyboard), and non-system apps.
+- The privileged helper (`privileged/PrivilegedService.kt`) only offers
+  enable and disable. It runs `pm` without a shell and validates package names.
+- **Re-enable all** restores everything this app disabled.
+
+The app also works as a normal app without being the default home screen. In
+that case Back exits it as usual.
+
 ## Code layout
 
 ```
@@ -65,6 +92,7 @@ lib/
     app_drawer/    drawer grid and search
     app_actions/   long-press sheet and openApp() (shared by home and drawer)
     hidden_apps/   HiddenAppsController, VisibleApps filter, hidden and manage screens
+    system_apps/   disable/enable system apps via Shizuku, risk tiers
     settings/      settings hub, with "Coming soon" placeholders
 
 android/app/src/main/kotlin/com/arun/minimal_launcher/
@@ -72,6 +100,10 @@ android/app/src/main/kotlin/com/arun/minimal_launcher/
   platform/LauncherChannel.kt           method channel; the full API is documented at the top
   platform/InstalledAppsSource.kt       PackageManager queries and icon rendering
   platform/PackageEventsStreamHandler.kt install/uninstall events → Dart
+  platform/SystemAppsChannel.kt         system-apps channel (Shizuku status, list, enable/disable)
+  platform/SystemAppsSource.kt          read-only: system apps + default-role holders
+  privileged/PrivilegedService.kt       runs in Shizuku's process; enable/disable only
+  privileged/PrivilegedServiceClient.kt binds that service from the app
 ```
 
 ### Key design points
