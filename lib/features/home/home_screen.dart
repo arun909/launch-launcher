@@ -35,46 +35,51 @@ class HomeScreen extends StatelessWidget {
       canPop: !isDefaultHome,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onVerticalDragEnd: (details) {
-            if ((details.primaryVelocity ?? 0) < -300) _openDrawer(context);
-          },
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Expanded(
-                        child: Padding(padding: EdgeInsets.only(top: 32), child: Clock()),
-                      ),
-                      IconButton(
-                        tooltip: 'Launcher settings',
-                        color: Colors.white70,
-                        icon: const Icon(Icons.settings_outlined),
-                        onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  if (pinned.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 24),
-                      child: Text(
-                        'Swipe up for all apps.\nLong-press an app there to add it here.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white60),
-                      ),
-                    )
-                  else
-                    _PinnedGrid(apps: pinned),
-                  _SearchPill(onTap: () => _openDrawer(context, focusSearch: true)),
-                  const SizedBox(height: 16),
-                ],
+        // Fade home content out while a route (drawer, settings) is on top;
+        // the drawer is see-through, and the wallpaper alone looks cleaner.
+        body: FadeTransition(
+          opacity: ReverseAnimation(ModalRoute.of(context)?.secondaryAnimation ?? kAlwaysDismissedAnimation),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onVerticalDragEnd: (details) {
+              if ((details.primaryVelocity ?? 0) < -300) _openDrawer(context);
+            },
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Expanded(
+                          child: Padding(padding: EdgeInsets.only(top: 32), child: Clock()),
+                        ),
+                        IconButton(
+                          tooltip: 'Launcher settings',
+                          color: Colors.white70,
+                          icon: const Icon(Icons.settings_outlined),
+                          onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    if (pinned.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 24),
+                        child: Text(
+                          'Swipe up for all apps.\nLong-press an app there to add it here.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white60),
+                        ),
+                      )
+                    else
+                      _PinnedGrid(apps: pinned),
+                    _SearchPill(onTap: () => _openDrawer(context, focusSearch: true)),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),

@@ -30,6 +30,13 @@ class _AppDrawerScreenState extends State<AppDrawerScreen> {
     super.dispose();
   }
 
+  /// Launches [app] and closes the drawer behind it, so returning from the
+  /// app lands on the home screen (as in most launchers).
+  Future<void> _launch(AppInfo app) async {
+    final launched = await openApp(context, app);
+    if (launched && mounted) Navigator.of(context).maybePop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoaded = context.select<AppsController, bool>((c) => c.isLoaded);
@@ -60,7 +67,7 @@ class _AppDrawerScreenState extends State<AppDrawerScreen> {
                 onChanged: (q) => setState(() => _query = q),
                 // Enter launches the top result, launcher-style.
                 onSubmitted: (_) {
-                  if (apps.isNotEmpty) openApp(context, apps.first);
+                  if (apps.isNotEmpty) _launch(apps.first);
                 },
               ),
             ),
@@ -104,7 +111,7 @@ class _AppDrawerScreenState extends State<AppDrawerScreen> {
           return AppTile(
             key: ValueKey(app.id),
             app: app,
-            onTap: () => openApp(context, app),
+            onTap: () => _launch(app),
             onLongPress: () => showAppActions(context, app),
           );
         },

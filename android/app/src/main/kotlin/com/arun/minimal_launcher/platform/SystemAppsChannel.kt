@@ -133,14 +133,25 @@ class SystemAppsChannel(
         return null
     }
 
+    /**
+     * Opens Shizuku if installed, otherwise its Google Play page. Play is
+     * targeted explicitly: on vivo/iQOO, a plain market:// link opens
+     * V-Appstore, which doesn't carry Shizuku.
+     */
     private fun openShizuku(): Boolean {
-        val launch = context.packageManager.getLaunchIntentForPackage(SHIZUKU_PACKAGE)
-        val intent = launch ?: Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$SHIZUKU_PACKAGE"))
-        return try {
-            context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            true
-        } catch (_: ActivityNotFoundException) {
-            false
+        val candidates = listOfNotNull(
+            context.packageManager.getLaunchIntentForPackage(SHIZUKU_PACKAGE),
+            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$SHIZUKU_PACKAGE"))
+                .setPackage(PLAY_STORE_PACKAGE),
+            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$SHIZUKU_PACKAGE")),
+        )
+        return candidates.any { intent ->
+            try {
+                context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                true
+            } catch (_: ActivityNotFoundException) {
+                false
+            }
         }
     }
 
@@ -170,6 +181,7 @@ class SystemAppsChannel(
     companion object {
         const val CHANNEL = "com.arun.minimal_launcher/system_apps"
         private const val SHIZUKU_PACKAGE = "moe.shizuku.privileged.api"
+        private const val PLAY_STORE_PACKAGE = "com.android.vending"
         private const val PERMISSION_REQUEST_CODE = 4711
         private const val PER_USER_UID_RANGE = 100_000
         private const val ICON_PX = 128

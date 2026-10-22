@@ -89,10 +89,12 @@ class _AppActionsSheet extends StatelessWidget {
 }
 
 /// Launches [app], showing a message if Android couldn't start it.
-Future<void> openApp(BuildContext context, AppInfo app) async {
+/// Returns whether it launched.
+Future<bool> openApp(BuildContext context, AppInfo app) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   final ok = await context.read<AppsController>().launch(app);
   if (!ok) {
     messenger?.showSnackBar(SnackBar(content: Text("Couldn't open ${app.label}")));
   }
+  return ok;
 }

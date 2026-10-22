@@ -58,6 +58,7 @@ class AppsController extends ChangeNotifier {
 
   /// Drops the on-disk cache and rebuilds everything, including icons.
   Future<void> rebuildCache() async {
+    await _refreshing; // let a running refresh finish writing before wiping
     await _cache.clear();
     _apps = const [];
     notifyListeners();

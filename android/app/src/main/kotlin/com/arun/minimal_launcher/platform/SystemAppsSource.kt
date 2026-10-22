@@ -53,8 +53,10 @@ class SystemAppsSource(private val context: Context) {
      */
     fun defaultRoleHolders(): Map<String, String> {
         val roles = HashMap<String, String>()
-        // Every installed home app, not just the default: one may be the fallback.
-        queryActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
+        // Every usable home app, not just the default: one may be the fallback.
+        // Disabled HOME components don't count (several system packages ship
+        // a dormant one, e.g. DeviceLockController).
+        queryActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), includeDisabled = false)
             .forEach { roles[it] = "home screen" }
         resolveDefault(Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com")))
             ?.let { roles[it] = "default browser" }
@@ -93,10 +95,11 @@ class SystemAppsSource(private val context: Context) {
     }
 
     private fun launchablePackages(): Set<String> =
-        queryActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)).toSet()
+        queryActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), includeDisabled = true)
+            .toSet()
 
-    private fun queryActivities(intent: Intent): List<String> {
-        val flags = PackageManager.MATCH_DISABLED_COMPONENTS.toLong()
+    private fun queryActivities(intent: Intent, includeDisabled: Boolean): List<String> {
+        val flags = if (includeDisabled) PackageManager.MATCH_DISABLED_COMPONENTS.toLong() else 0L
         val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             pm.queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(flags))
         } else {
