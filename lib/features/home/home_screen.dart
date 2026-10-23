@@ -38,10 +38,13 @@ class HomeScreen extends StatelessWidget {
       canPop: !isDefaultHome,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        // Fade home content out while a route (drawer, settings) is on top;
+        // Fade home content out while anything (drawer, settings) is on top:
         // the drawer is see-through, and the wallpaper alone looks cleaner.
-        body: FadeTransition(
-          opacity: ReverseAnimation(ModalRoute.of(context)?.secondaryAnimation ?? kAlwaysDismissedAnimation),
+        // (isCurrent, not secondaryAnimation: Flutter only drives that between
+        // matching route types, and the drawer uses a custom route.)
+        body: AnimatedOpacity(
+          opacity: (ModalRoute.of(context)?.isCurrent ?? true) ? 1 : 0,
+          duration: const Duration(milliseconds: 160),
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onVerticalDragEnd: (details) {

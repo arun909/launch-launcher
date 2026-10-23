@@ -1,7 +1,6 @@
 package com.arun.minimal_launcher
 
 import android.content.Intent
-import android.os.Bundle
 import com.arun.minimal_launcher.platform.DisplayRefreshRate
 import com.arun.minimal_launcher.platform.LauncherChannel
 import com.arun.minimal_launcher.platform.SystemAppsChannel
@@ -19,8 +18,9 @@ class MainActivity : FlutterActivity() {
     private var launcherChannel: LauncherChannel? = null
     private var systemAppsChannel: SystemAppsChannel? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    /** Ask for 120 Hz each time we come to the front (OEMs may reset it). */
+    override fun onResume() {
+        super.onResume()
         DisplayRefreshRate.requestHighest(this)
     }
 
