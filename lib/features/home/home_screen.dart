@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/apps/home_role_controller.dart';
@@ -7,12 +8,14 @@ import '../../core/routing/app_routes.dart';
 import '../../core/widgets/app_icon.dart';
 import '../app_actions/app_actions_sheet.dart';
 import '../hidden_apps/visible_apps.dart';
+import 'home_actions_sheet.dart';
 import 'home_apps_controller.dart';
 import 'widgets/clock.dart';
 
 /// The home screen: clock, pinned apps and a search pill, over the wallpaper.
 ///
-/// Swipe up or tap the search pill to open the drawer.
+/// Swipe up or tap the search pill to open the drawer; long-press empty space
+/// for wallpaper and settings.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -43,6 +46,11 @@ class HomeScreen extends StatelessWidget {
             behavior: HitTestBehavior.translucent,
             onVerticalDragEnd: (details) {
               if ((details.primaryVelocity ?? 0) < -300) _openDrawer(context);
+            },
+            // App tiles handle their own long-press, so this only fires on empty space.
+            onLongPress: () {
+              HapticFeedback.mediumImpact();
+              showHomeActions(context);
             },
             child: SafeArea(
               child: Padding(

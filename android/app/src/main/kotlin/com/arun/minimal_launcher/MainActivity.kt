@@ -1,10 +1,13 @@
 package com.arun.minimal_launcher
 
 import android.content.Intent
+import android.os.Bundle
+import com.arun.minimal_launcher.platform.DisplayRefreshRate
 import com.arun.minimal_launcher.platform.LauncherChannel
 import com.arun.minimal_launcher.platform.SystemAppsChannel
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
+import io.flutter.embedding.android.RenderMode
 import io.flutter.embedding.engine.FlutterEngine
 
 /**
@@ -15,6 +18,11 @@ class MainActivity : FlutterActivity() {
 
     private var launcherChannel: LauncherChannel? = null
     private var systemAppsChannel: SystemAppsChannel? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        DisplayRefreshRate.requestHighest(this)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -34,6 +42,13 @@ class MainActivity : FlutterActivity() {
 
     /** Transparent Flutter surface so the system wallpaper shows through. */
     override fun getBackgroundMode(): BackgroundMode = BackgroundMode.transparent
+
+    /**
+     * Flutter picks the slower TextureView for transparent backgrounds by
+     * default (an extra copy every frame). SurfaceView supports transparency
+     * too, and is composited directly by the system, so use it.
+     */
+    override fun getRenderMode(): RenderMode = RenderMode.surface
 
     /**
      * Because the activity is singleTask, pressing Home while the launcher is

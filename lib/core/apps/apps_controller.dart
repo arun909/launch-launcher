@@ -83,6 +83,12 @@ class AppsController extends ChangeNotifier {
     }
 
     final previous = {for (final a in _apps) a.id: a};
+
+    // Nothing installed, removed or updated (the usual case when returning to
+    // home): skip the rebuild and disk writes, which would otherwise land in
+    // the middle of the back-to-home animation.
+    if (_isUnchanged(previous, fresh)) return;
+
     final needIcons = <String>[];
     var merged = fresh.map((app) {
       final old = previous[app.id];
@@ -113,6 +119,20 @@ class AppsController extends ChangeNotifier {
 
     await _cache.saveList(_apps);
     await _cache.pruneIcons(_apps.where((a) => a.icon != null).map((a) => a.id));
+  }
+
+  static bool _isUnchanged(Map<String, AppInfo> previous, List<AppInfo> fresh) {
+    if (previous.isEmpty || previous.length != fresh.length) return false;
+    for (final app in fresh) {
+      final old = previous[app.id];
+      if (old == null ||
+          old.icon == null ||
+          old.label != app.label ||
+          old.lastUpdateTime != app.lastUpdateTime) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void _setApps(List<AppInfo> apps) {

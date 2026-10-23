@@ -64,6 +64,15 @@ class LauncherPlatform {
   /// Opens Android's "Default home app" picker.
   Future<void> openHomeSettings() => _method.invokeMethod('openHomeSettings');
 
+  /// Opens Android's chooser of wallpaper apps (system picker, Photos, themes...).
+  /// Returns false if the phone has none.
+  Future<bool> openWallpaperPicker() async =>
+      await _method.invokeMethod<bool>('openWallpaperPicker') ?? false;
+
+  /// Opens Android's live-wallpaper list. Returns false if the phone has none.
+  Future<bool> openLiveWallpaperPicker() async =>
+      await _method.invokeMethod<bool>('openLiveWallpaperPicker') ?? false;
+
   /// True if Android currently uses this app as the home screen.
   Future<bool> isDefaultHome() async => await _method.invokeMethod<bool>('isDefaultHome') ?? false;
 

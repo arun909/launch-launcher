@@ -1,5 +1,6 @@
 package com.arun.minimal_launcher.platform
 
+import android.app.WallpaperManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -28,6 +29,8 @@ import java.util.concurrent.Executors
  *     openAppInfo({packageName})                 -> null
  *     openHomeSettings()                         -> null  (system "default home app" picker)
  *     isDefaultHome()                            -> Boolean (this app is the current home screen)
+ *     openWallpaperPicker()                      -> Boolean (system chooser of wallpaper apps)
+ *     openLiveWallpaperPicker()                  -> Boolean (system live-wallpaper list)
  *   Android -> Dart:
  *     onHomePressed()                            Home pressed while launcher is in front
  *
@@ -98,6 +101,17 @@ class LauncherChannel(
             }
 
             "isDefaultHome" -> result.success(isDefaultHome(context))
+
+            // Both only open the OS's own screens; the user sets the wallpaper there.
+            "openWallpaperPicker" -> {
+                val chooser = Intent.createChooser(Intent(Intent.ACTION_SET_WALLPAPER), "Set wallpaper with")
+                result.success(startSafely(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)))
+            }
+
+            "openLiveWallpaperPicker" -> {
+                val intent = Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)
+                result.success(startSafely(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)))
+            }
 
             else -> result.notImplemented()
         }
