@@ -11,7 +11,6 @@ import '../../../core/widgets/app_icon.dart';
 import '../../app_actions/app_actions_sheet.dart';
 import '../../appearance/wallpaper_glass.dart';
 import '../../standard_home/corner_shapes.dart';
-import '../../hidden_apps/visible_apps.dart';
 
 /// The last text-search apps found, shown at once while they're looked up
 /// again (an app may have been installed since).
@@ -179,7 +178,9 @@ class _SearchSheetState extends State<_SearchSheet> {
   @override
   Widget build(BuildContext context) {
     final query = _text.text.trim();
-    final apps = _matching(context.watch<VisibleApps>().apps, query.toLowerCase());
+    // The full list, hidden apps included: they stay out of every listing,
+    // but typing a hidden app's name here still finds it.
+    final apps = _matching(context.watch<AppsController>().apps, query.toLowerCase());
 
     return Padding(
       padding: EdgeInsets.fromLTRB(12, 0, 12, MediaQuery.viewInsetsOf(context).bottom + 12),
