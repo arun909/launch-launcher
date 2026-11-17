@@ -9,8 +9,7 @@ import '../../core/platform/system_apps_platform.dart';
 /// Unlike hiding, disabling is system-wide: the app disappears from every
 /// launcher and can't run until re-enabled. Nothing is deleted.
 class SystemAppsController extends ChangeNotifier {
-  SystemAppsController(this._platform, this._prefs)
-    : _disabledByUs = (_prefs.getStringList(_key) ?? const []).toSet();
+  SystemAppsController(this._platform, this._prefs) : _disabledByUs = (_prefs.getStringList(_key) ?? const []).toSet();
 
   static const _key = 'disabled_by_launcher';
 

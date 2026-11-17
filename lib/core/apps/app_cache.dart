@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 
 import '../models/app_info.dart';
+import '../models/icon_shape.dart';
+import '../models/icon_style.dart';
 
 /// On-disk cache of the app list and icons, so cold start can render
 /// immediately instead of waiting for PackageManager.
@@ -12,6 +14,12 @@ import '../models/app_info.dart';
 /// Layout (in the app support dir):
 ///   `app_cache/apps.json`         list of AppInfo metadata
 ///   `app_cache/icons/<hash>.png`  one PNG per app id
+///   `app_cache/icon_shape.txt`    the [IconShape] those PNGs were rendered with
+///   `app_cache/icon_style.txt`    [iconRendererVersion] and the [IconStyle] they were rendered with
+/// Bump when the native icon drawing changes, so cached icons are redrawn
+/// even though the user's settings are the same.
+const iconRendererVersion = 4;
+
 class AppCache {
   AppCache({Future<Directory> Function()? baseDir}) : _baseDir = baseDir ?? getApplicationSupportDirectory;
 
@@ -55,6 +63,39 @@ class AppCache {
   }
 
   Future<void> saveIcon(String id, Uint8List png) async => (await _iconFile(id)).writeAsBytes(png);
+
+  Future<File> _shapeFile() async => File('${(await _dir()).path}/icon_shape.txt');
+
+  /// Shape the cached icons were rendered with. Caches from before icon
+  /// shapes existed have no file and were rendered as [IconShape.system].
+  Future<IconShape> loadIconShape() async {
+    try {
+      final file = await _shapeFile();
+      return await file.exists() ? IconShape.decode((await file.readAsString()).trim()) : IconShape.system;
+    } catch (_) {
+      return IconShape.system;
+    }
+  }
+
+  Future<void> saveIconShape(IconShape shape) async => (await _shapeFile()).writeAsString(shape.encode());
+
+  Future<File> _styleFile() async => File('${(await _dir()).path}/icon_style.txt');
+
+  /// Style the cached icons were rendered with, or null if they were drawn by
+  /// another [iconRendererVersion] (or the cache predates icon styles).
+  Future<IconStyle?> loadIconStyle() async {
+    try {
+      final file = await _styleFile();
+      if (!await file.exists()) return null;
+      final [version, style] = (await file.readAsString()).split('\n');
+      return version == '$iconRendererVersion' ? IconStyle.decode(style) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveIconStyle(IconStyle style) async =>
+      (await _styleFile()).writeAsString('$iconRendererVersion\n${style.encode()}');
 
   /// Deletes icon files that don't belong to any of [keepIds].
   Future<void> pruneIcons(Iterable<String> keepIds) async {

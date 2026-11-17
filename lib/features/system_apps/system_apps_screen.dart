@@ -47,24 +47,19 @@ class _SystemAppsScreenState extends State<SystemAppsScreen> {
     for (final app in apps.where((a) => a.enabled)) {
       byLevel[assessRisk(app).level]!.add(app);
     }
-    final restorable = controller.apps.where(
-      (a) => !a.enabled && controller.disabledByUs.contains(a.packageName),
-    );
+    final restorable = controller.apps.where((a) => !a.enabled && controller.disabledByUs.contains(a.packageName));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Disable system apps'),
-        actions: [
-          IconButton(tooltip: 'Refresh', icon: const Icon(Icons.refresh), onPressed: controller.refresh),
-        ],
+        actions: [IconButton(tooltip: 'Refresh', icon: const Icon(Icons.refresh), onPressed: controller.refresh)],
       ),
       body: RefreshIndicator(
         onRefresh: controller.refresh,
         child: ListView(
           children: [
             const _InfoCard(),
-            if (controller.status != null && !controller.isReady)
-              _ShizukuSetupCard(status: controller.status!),
+            if (controller.status != null && !controller.isReady) _ShizukuSetupCard(status: controller.status!),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: SearchBar(
@@ -79,10 +74,7 @@ class _SystemAppsScreenState extends State<SystemAppsScreen> {
                 child: Center(child: CircularProgressIndicator()),
               ),
             if (controller.loadError != null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('Could not list apps: ${controller.loadError}'),
-              ),
+              Padding(padding: const EdgeInsets.all(16), child: Text('Could not list apps: ${controller.loadError}')),
             if (disabled.isNotEmpty) ...[
               const _Header('Disabled'),
               if (restorable.isNotEmpty)
@@ -118,9 +110,7 @@ class _SystemAppsScreenState extends State<SystemAppsScreen> {
   Future<void> _enableAll(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     final failed = await context.read<SystemAppsController>().enableAllDisabledByUs();
-    messenger.showSnackBar(
-      SnackBar(content: Text(failed.isEmpty ? 'All re-enabled' : 'Failed: ${failed.join(', ')}')),
-    );
+    messenger.showSnackBar(SnackBar(content: Text(failed.isEmpty ? 'All re-enabled' : 'Failed: ${failed.join(', ')}')));
   }
 }
 
@@ -162,6 +152,7 @@ class _SystemAppTile extends StatelessWidget {
     final error = await controller.setEnabled(app, enabled: enable);
     messenger.showSnackBar(
       SnackBar(
+        persist: false, // with an action, Flutter otherwise keeps it until tapped
         content: Text(error ?? '${app.label} ${enable ? 'enabled' : 'disabled'}'),
         action: error == null && !enable
             ? SnackBarAction(label: 'Undo', onPressed: () => controller.setEnabled(app, enabled: true))

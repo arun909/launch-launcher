@@ -30,9 +30,17 @@ object DisplayRefreshRate {
     private val attached = WeakHashMap<SurfaceView, Boolean>()
 
     /** Call from onResume: OEMs may reset the preference when the window refocuses. */
-    fun requestHighest(activity: Activity) {
+    fun requestHighest(activity: Activity) = request(activity, lowest = false)
+
+    /**
+     * The opposite, for the standby clock: the slowest mode the screen has
+     * (often 60 Hz, lower on LTPO panels), since it barely moves.
+     */
+    fun requestLowest(activity: Activity) = request(activity, lowest = true)
+
+    private fun request(activity: Activity, lowest: Boolean) {
         val display = currentDisplay(activity) ?: return
-        val best = highestMode(display) ?: return
+        val best = modeAtSameSize(display, lowest) ?: return
 
         val attrs = activity.window.attributes
         if (attrs.preferredDisplayModeId != best.modeId || attrs.preferredRefreshRate != best.refreshRate) {
@@ -82,11 +90,11 @@ object DisplayRefreshRate {
         else -> emptyList()
     }
 
-    private fun highestMode(display: Display): Display.Mode? {
+    private fun modeAtSameSize(display: Display, lowest: Boolean): Display.Mode? {
         val current = display.mode
-        return display.supportedModes
+        val modes = display.supportedModes
             .filter { it.physicalWidth == current.physicalWidth && it.physicalHeight == current.physicalHeight }
-            .maxByOrNull { it.refreshRate }
+        return if (lowest) modes.minByOrNull { it.refreshRate } else modes.maxByOrNull { it.refreshRate }
     }
 
     private fun currentDisplay(activity: Activity): Display? =

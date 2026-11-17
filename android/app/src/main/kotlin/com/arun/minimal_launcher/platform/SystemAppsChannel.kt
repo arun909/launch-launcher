@@ -41,7 +41,7 @@ class SystemAppsChannel(
     private val source = SystemAppsSource(context)
     private val mainHandler = Handler(Looper.getMainLooper())
     private val worker: ExecutorService = Executors.newSingleThreadExecutor()
-    private val service = PrivilegedServiceClient(context.packageName, appVersionCode())
+    private val service = PrivilegedServiceClient.shared(context)
     private var pendingPermission: MethodChannel.Result? = null
 
     private val permissionListener = Shizuku.OnRequestPermissionResultListener { code, grant ->
@@ -160,11 +160,6 @@ class SystemAppsChannel(
         true
     } catch (_: PackageManager.NameNotFoundException) {
         false
-    }
-
-    private fun appVersionCode(): Int {
-        val info = context.packageManager.getPackageInfo(context.packageName, 0)
-        return info.longVersionCode.toInt()
     }
 
     private fun inBackground(result: MethodChannel.Result, work: () -> Any?) {

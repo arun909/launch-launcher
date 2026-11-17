@@ -1,6 +1,7 @@
 package com.arun.minimal_launcher.privileged
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.ServiceConnection
 import android.os.Handler
 import android.os.IBinder
@@ -58,5 +59,17 @@ class PrivilegedServiceClient(packageName: String, version: Int) {
             // Shizuku already gone; nothing to release.
         }
         service = null
+    }
+
+    companion object {
+        @Volatile private var instance: PrivilegedServiceClient? = null
+
+        /** One client for the whole app, so features share one binding. */
+        fun shared(context: Context): PrivilegedServiceClient = instance ?: synchronized(this) {
+            instance ?: run {
+                val version = context.packageManager.getPackageInfo(context.packageName, 0).longVersionCode.toInt()
+                PrivilegedServiceClient(context.packageName, version).also { instance = it }
+            }
+        }
     }
 }

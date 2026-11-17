@@ -56,7 +56,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName(if (hasReleaseKey) "release" else "debug")
+            // `-P debugSigned=true`: a full-speed release build signed with the
+            // debug key, so it installs over the debug-key app on the phone
+            // (keeping its data). Otherwise the personal release key.
+            val debugSigned = project.findProperty("debugSigned") == "true"
+            signingConfig = signingConfigs.getByName(if (hasReleaseKey && !debugSigned) "release" else "debug")
         }
     }
 }
@@ -77,4 +81,24 @@ dependencies {
     val shizukuVersion = "13.1.5"
     implementation("dev.rikka.shizuku:api:$shizukuVersion")
     implementation("dev.rikka.shizuku:provider:$shizukuVersion")
+
+    // Instant search: Google's QR scanner (its own camera screen, from Play
+    // services: no camera permission here) and FileProvider for sharing images.
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("androidx.core:core:1.13.1")
+
+    // Instant search's camera: a live viewfinder that goes straight to search.
+    val cameraxVersion = "1.6.1"
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+    implementation("androidx.activity:activity:1.9.0")
+
+    // Phone-stats widget: Bluetooth devices' battery levels are a hidden
+    // (system) getter that only checks BLUETOOTH_CONNECT.
+    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3")
+
+    // Hold-to-search's Incognito: its pages in their own web profile
+    // (cookies, storage, cache), deleted when it closes.
+    implementation("androidx.webkit:webkit:1.12.1")
 }

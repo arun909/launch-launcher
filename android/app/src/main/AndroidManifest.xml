@@ -7,9 +7,79 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
+    <!-- Pull down the notification / quick-settings panel from a home-screen
+         swipe. Normal permission, granted at install; only opens the panel. -->
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
+    <!-- Control center: silent mode and Do Not Disturb (the user, or
+         Shizuku, still has to allow Do Not Disturb access). -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
+    <!-- Open Android's "Uninstall this app?" dialog (ACTION_DELETE, API 28+).
+         Normal permission; the user still confirms in the system dialog. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!-- Read the wallpaper image (WallpaperManager.getDrawable needs photo
+         access), only to draw frosted-glass folders over it. Asked for the
+         first time a folder is set to glass. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Standby clock: a do-nothing foreground service keeps the launcher
+         from being frozen (vivo's fast freezer), so it notices the phone
+         being locked; and it comes back after a reboot. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- A few seconds' wake after locking, to notice the phone being placed
+         sideways while the screen is off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Opens the standby clock over the lock screen the way alarm clocks
+         do: a silent full-screen notification (Android blocks background
+         apps from opening screens otherwise). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Standby's beat pulse: Android's Visualizer on the phone's own audio
+         output needs these. Only the bass energy is read; the microphone is
+         never used and nothing is recorded or kept. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- Instant search's camera: its own viewfinder, so a photo goes
+         straight to search. Asked for the first time it's opened. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+
+    <!-- Phone-stats widget: today's screen time and unlocks come from
+         Android's usage events ("Usage access", turned on by the user in
+         settings); connected Bluetooth devices and their batteries need
+         "Nearby devices". Asked from the widget. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- The clock's weather: fetched from Open-Meteo (no account) for the
+         phone's approximate location, or a city picked instead. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Control center brightness: "Modify system settings" (allowed by the
+         user, or through Shizuku). Extra dim: WRITE_SECURE_SETTINGS, which
+         only adb / Shizuku can grant; without it, its settings page opens. -->
+    <uses-permission
+        android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:label="Minimal Launcher"
-        android:name="${applicationName}"
+        android:name=".LauncherApplication"
         android:icon="@mipmap/ic_launcher">
         <!--
           Launcher activity notes:
@@ -46,6 +116,79 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- The standby clock: sideways, over the lock screen (see
+             StandbyMonitor). Its own task, never in Recents. -->
+        <activity
+            android:name=".platform.CaptureActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <activity
+            android:name=".platform.standby.StandbyActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:screenOrientation="sensorLandscape"
+            android:launchMode="singleInstance"
+            android:taskAffinity="com.arun.minimal_launcher.standby"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true" />
+        <service
+            android:name=".platform.standby.StandbyService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Watches for the phone being locked and turned sideways to show a clock" />
+        </service>
+        <!-- "Full-screen button" over web browsers (a settings switch). -->
+        <service
+            android:name=".platform.BrowserButtonService"
+            android:exported="true"
+            android:label="Minimal Launcher shortcuts"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/browser_button_service" />
+        </service>
+        <!-- "Standby clock" Quick Settings tile: opens the clock, also from
+             the lock screen. -->
+        <service
+            android:name=".platform.standby.StandbyTileService"
+            android:exported="true"
+            android:icon="@android:drawable/ic_lock_idle_alarm"
+            android:label="Standby clock"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <!-- Notification access, only so the standby clock can show what's
+             playing and control it (media sessions need it). Notifications
+             themselves are ignored. -->
+        <service
+            android:name=".platform.standby.MediaListenerService"
+            android:exported="true"
+            android:label="Standby now playing"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+        <receiver
+            android:name=".platform.standby.StandbyBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- Receives Shizuku's binder so the app can use it (system-apps feature).
              Protected by a permission only the system/Shizuku holds. -->
         <provider
@@ -55,6 +198,20 @@
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+        <!-- Hands the instant-search widget's picked image to other apps. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.instant.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/instant_files" />
+        </provider>
+        <!-- Play services downloads the QR scanner at install, not on the first scan. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -62,6 +219,13 @@
             android:value="2" />
     </application>
     <queries>
+        <!-- Instant search (QUERY_ALL_PACKAGES covers these; listed for clarity). -->
+        <intent>
+            <action android:name="android.intent.action.WEB_SEARCH"/>
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

@@ -38,13 +38,8 @@ class SystemApp {
     defaultRole: map['defaultRole'] as String?,
   );
 
-  SystemApp copyWith({required bool enabled}) => SystemApp(
-    packageName: packageName,
-    label: label,
-    icon: icon,
-    enabled: enabled,
-    defaultRole: defaultRole,
-  );
+  SystemApp copyWith({required bool enabled}) =>
+      SystemApp(packageName: packageName, label: label, icon: icon, enabled: enabled, defaultRole: defaultRole);
 }
 
 /// Dart side of `platform/SystemAppsChannel.kt`; keep both in sync.

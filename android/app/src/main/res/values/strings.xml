@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_button_description">Minimal Launcher\'s shortcuts over other apps. Full-screen button: a small button over web browsers shows the page you are on full screen, with no address bar. Hold to search: touch and hold the bottom centre of the screen to search, with the results in a floating window. Only which app is in front, whether a keyboard is up and the browser\'s address bar are read; nothing is kept or sent anywhere.</string>
+</resources>

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.5+7
+version: 1.2.3+23
 
 environment:
   sdk: ^3.13.4
@@ -59,6 +59,34 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Clock widget fonts: variable, OFL-licensed (from Google Fonts), cut down
+  # to Latin by tool/subset_clock_fonts.py. Licence: assets/fonts/clock/OFL.txt.
+  fonts:
+    - family: ClockGoogleSans
+      fonts:
+        - asset: assets/fonts/clock/GoogleSansFlex.ttf
+    - family: ClockInter
+      fonts:
+        - asset: assets/fonts/clock/Inter.ttf
+    - family: ClockNunito
+      fonts:
+        - asset: assets/fonts/clock/Nunito.ttf
+    - family: ClockSourceSerif
+      fonts:
+        - asset: assets/fonts/clock/SourceSerif4.ttf
+    - family: ClockOswald
+      fonts:
+        - asset: assets/fonts/clock/Oswald.ttf
+    - family: ClockOutfit
+      fonts:
+        - asset: assets/fonts/clock/Outfit.ttf
+    - family: ClockSpaceGrotesk
+      fonts:
+        - asset: assets/fonts/clock/SpaceGrotesk.ttf
+    - family: ClockDoto
+      fonts:
+        - asset: assets/fonts/clock/Doto.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

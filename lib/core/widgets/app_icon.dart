@@ -17,7 +17,8 @@ class AppIcon extends StatelessWidget {
         width: size,
         height: size,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(size / 4)),
+        // Fully rounded corners: a circle for round icons, close enough for the rest.
+        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(size / 2)),
         child: Text(
           app.label.isEmpty ? '?' : app.label.characters.first.toUpperCase(),
           style: TextStyle(color: Colors.white, fontSize: size * 0.4),
@@ -38,17 +39,33 @@ class AppIcon extends StatelessWidget {
 
 /// Icon + label, the standard tappable cell used on home and in the drawer.
 class AppTile extends StatelessWidget {
-  const AppTile({super.key, required this.app, required this.onTap, this.onLongPress, this.iconSize = 52});
+  const AppTile({
+    super.key,
+    required this.app,
+    required this.onTap,
+    this.onLongPress,
+    this.iconSize = 52,
+    this.labelSize = 12,
+    this.showLabel = true,
+  });
 
   final AppInfo app;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final double iconSize;
 
+  /// Label font size; its line is always 16 high (Material 3 label styles).
+  final double labelSize;
+
+  /// False: icon only. The label's line stays (empty), so the icon doesn't
+  /// move, and screen readers still get the name.
+  final bool showLabel;
+
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    // No ink: a launcher icon shows no highlight box when tapped.
+    final tile = GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       onLongPress: onLongPress,
       child: Padding(
@@ -58,20 +75,28 @@ class AppTile extends StatelessWidget {
           children: [
             AppIcon(app: app, size: iconSize),
             const SizedBox(height: 6),
-            Text(
-              app.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
-              ),
+            // A fixed line height keeps every tile exactly 90 high, so icons in
+            // containers line up with these (see HomeGrid.tileHeight).
+            SizedBox(
+              height: 16,
+              child: !showLabel
+                  ? null
+                  : Text(
+                      app.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: labelSize,
+                        shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                      ),
+                    ),
             ),
           ],
         ),
       ),
     );
+    return showLabel ? tile : Semantics(label: app.label, child: tile);
   }
 }
