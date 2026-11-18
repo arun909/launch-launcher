@@ -140,7 +140,9 @@ class _LauncherAppState extends State<LauncherApp> {
     ChangeNotifierProvider<AppsController>.value(value: widget.apps),
     ChangeNotifierProvider<HomeRoleController>.value(value: _homeRole),
     ChangeNotifierProvider(create: (_) => AppearanceController(widget.prefs, widget.apps)),
-    ChangeNotifierProvider(create: (_) => HiddenAppsController(widget.prefs)),
+    ChangeNotifierProvider(
+      create: (_) => HiddenAppsController(widget.prefs, onSync: widget.platform.setHiddenNotifications),
+    ),
     ChangeNotifierProvider(create: (c) => FullScreenWebController(c.read<InstantPlatform>())),
     ChangeNotifierProvider(create: (c) => HoldSearchController(c.read<InstantPlatform>())),
     ChangeNotifierProvider(create: (_) => HomeAppsController(widget.prefs)),

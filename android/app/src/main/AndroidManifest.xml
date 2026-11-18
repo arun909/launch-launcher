@@ -169,9 +169,9 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
-        <!-- Notification access, only so the standby clock can show what's
-             playing and control it (media sessions need it). Notifications
-             themselves are ignored. -->
+        <!-- Notification access, so the standby clock and music widget can
+             show what's playing and control it (media sessions need it), and
+             to dismiss hidden apps' notifications when that's turned off. -->
         <service
             android:name=".platform.standby.MediaListenerService"
             android:exported="true"

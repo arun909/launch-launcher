@@ -16,16 +16,32 @@ import android.os.Looper
 import android.os.SystemClock
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
+import android.service.notification.StatusBarNotification
+import com.arun.minimal_launcher.platform.HiddenNotifications
 import android.util.Log
 import android.view.KeyEvent
 import java.io.ByteArrayOutputStream
 
 /**
- * Only here so Android lets us read other apps' media sessions
+ * Lets Android hand us other apps' media sessions
  * ([MediaSessionManager.getActiveSessions] needs an enabled notification
- * listener). It ignores the notifications themselves.
+ * listener). The only notifications it acts on are hidden apps', when the
+ * user turned those off ([HiddenNotifications]).
  */
-class MediaListenerService : NotificationListenerService()
+class MediaListenerService : NotificationListenerService() {
+    override fun onListenerConnected() {
+        HiddenNotifications.listener = this
+        HiddenNotifications.sweep(this)
+    }
+
+    override fun onListenerDisconnected() {
+        if (HiddenNotifications.listener === this) HiddenNotifications.listener = null
+    }
+
+    override fun onNotificationPosted(sbn: StatusBarNotification) {
+        HiddenNotifications.onPosted(this, sbn)
+    }
+}
 
 /**
  * What's playing on the phone (any app: Spotify, YouTube Music, a browser…),

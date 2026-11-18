@@ -146,9 +146,13 @@ class LauncherWidgetView extends StatelessWidget {
     // Without a panel it's on the wallpaper: white, whatever the style.
     final content = PanelInk(
       style: onPanel ? style : GroupStyle.glass,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: padding + 4, vertical: padding),
-        child: Builder(builder: (context) => kind.build(context, settings)),
+      child: LauncherWidgetFrame(
+        radius: radius,
+        insets: EdgeInsets.symmetric(horizontal: padding + 4, vertical: padding),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padding + 4, vertical: padding),
+          child: Builder(builder: (context) => kind.build(context, settings)),
+        ),
       ),
     );
     if (!onPanel) return content;
@@ -176,6 +180,23 @@ class LauncherWidgetView extends StatelessWidget {
   }
 }
 
+/// The frame a launcher widget sits in, the same as a container's: its
+/// corner [radius] and the [insets] around the content. A widget that draws
+/// its own background instead of a panel fills this frame (reaching out by
+/// [insets]) so it lines up with folders and containers.
+class LauncherWidgetFrame extends InheritedWidget {
+  const LauncherWidgetFrame({super.key, required this.radius, required this.insets, required super.child});
+
+  final double radius;
+  final EdgeInsets insets;
+
+  static LauncherWidgetFrame? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<LauncherWidgetFrame>();
+
+  @override
+  bool updateShouldNotify(LauncherWidgetFrame old) => old.radius != radius || old.insets != insets;
+}
+
 /// The panel looks a launcher widget offers: the same as a group's
 /// backgrounds (bar its colours).
 const panelStyles = [
@@ -194,7 +215,10 @@ class PanelInk extends InheritedWidget {
     : super(
         child: DefaultTextStyle.merge(
           style: TextStyle(color: style.ink),
-          child: IconTheme.merge(data: IconThemeData(color: style.ink), child: child),
+          child: IconTheme.merge(
+            data: IconThemeData(color: style.ink),
+            child: child,
+          ),
         ),
       );
 
@@ -218,8 +242,11 @@ class PanelInk extends InheritedWidget {
 
 /// A stored panel style ([GroupStyle.name]); [fallback] if unset or unknown.
 /// [styles]: the looks this widget offers (default [panelStyles]).
-GroupStyle panelStyleFrom(Object? name, {GroupStyle fallback = GroupStyle.glass, List<GroupStyle> styles = panelStyles}) =>
-    styles.where((s) => s.name == name).firstOrNull ?? fallback;
+GroupStyle panelStyleFrom(
+  Object? name, {
+  GroupStyle fallback = GroupStyle.glass,
+  List<GroupStyle> styles = panelStyles,
+}) => styles.where((s) => s.name == name).firstOrNull ?? fallback;
 
 /// Light / Dark / Glass blur, as a group's backgrounds are labelled; with
 /// [allowNone], also "None" (null): straight on the wallpaper.
@@ -275,23 +302,14 @@ class PanelStylePicker extends StatelessWidget {
         selected: value == s,
         onSelected: (_) => _pick(context, s),
       );
-      return Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [if (allowNone) chip(null), for (final s in styles) chip(s)],
-      );
+      return Wrap(spacing: 8, runSpacing: 8, children: [if (allowNone) chip(null), for (final s in styles) chip(s)]);
     }
     return SegmentedButton<String>(
       showSelectedIcon: false,
       segments: [
         if (allowNone) const ButtonSegment(value: 'none', icon: Icon(Icons.wallpaper_outlined), label: Text('None')),
         // Four or more: labels only, so each still fits on one line.
-        for (final s in styles)
-          ButtonSegment(
-            value: s.name,
-            icon: Icon(_icon(s)),
-            label: Text(_label(s), maxLines: 1),
-          ),
+        for (final s in styles) ButtonSegment(value: s.name, icon: Icon(_icon(s)), label: Text(_label(s), maxLines: 1)),
       ],
       selected: {value?.name ?? 'none'},
       onSelectionChanged: (v) => _pick(context, styles.where((s) => s.name == v.first).firstOrNull),

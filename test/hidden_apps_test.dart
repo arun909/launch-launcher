@@ -54,5 +54,23 @@ void main() {
       await reloaded.unhide(chrome.id);
       expect(HiddenAppsController(prefs).isHidden(chrome.id), isFalse);
     });
+
+    test('hidden apps notify by default; turning that off hands their packages to the filter', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final synced = <(bool, Set<String>)>[];
+      final c = HiddenAppsController(prefs, onSync: (block, pkgs) => synced.add((block, pkgs)));
+
+      expect(c.showNotifications, isTrue);
+      expect(synced.last.$1, isFalse);
+      expect(synced.last.$2, isEmpty);
+
+      await c.hide(chrome.id);
+      await c.setShowNotifications(false);
+      expect(synced.last.$1, isTrue);
+      expect(synced.last.$2, {'pkg.chrome'});
+
+      expect(HiddenAppsController(prefs).showNotifications, isFalse);
+    });
   });
 }

@@ -160,6 +160,15 @@ class LauncherChannel(
 
             "expandQuickSettings" -> result.success(expandStatusBar("expandSettingsPanel"))
 
+            "setHiddenNotifications" -> {
+                HiddenNotifications.set(
+                    context,
+                    call.argument<Boolean>("block") ?: false,
+                    call.argument<List<String>>("packages").orEmpty(),
+                )
+                result.success(null)
+            }
+
             else -> result.notImplemented()
         }
     }

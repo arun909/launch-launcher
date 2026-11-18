@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/platform/window_blur_platform.dart';
 import '../../standard_home/home_layout.dart';
 import '../../standard_home/home_layout_controller.dart';
 import '../controls/tile_look.dart';
 import '../launcher_widgets.dart';
 import 'analog_clock.dart';
+import 'wallpaper_colors.dart';
 
 /// The futuristic clock: sci-fi faces (a HUD, a radar, lit rings, orbits,
 /// binary, a dot matrix) in white with one glowing accent colour. The same
@@ -33,7 +36,11 @@ const futuristicClockKind = LauncherWidgetKind(
 
 Widget _build(BuildContext context, Map<String, dynamic> settings) => opensClockApp(
   context,
-  FuturisticClock(face: _faceOf(settings), accent: _accentOf(settings), background: clockBackgroundOf(settings)),
+  _WithAccent(
+    settings: settings,
+    builder: (accent) =>
+        FuturisticClock(face: _faceOf(settings), accent: accent, background: clockBackgroundOf(settings)),
+  ),
 );
 
 enum FutureFace {
@@ -68,6 +75,42 @@ const _accents = <String, Color>{
 FutureFace _faceOf(Map<String, dynamic> s) => FutureFace.values.asNameMap()[s['face']] ?? FutureFace.hud;
 
 Color _accentOf(Map<String, dynamic> s) => _accents[s['accent']] ?? _accents['cyan']!;
+
+/// The glow taken from the wallpaper (settings['accent'] == 'wallpaper').
+const _wallpaperAccent = 'wallpaper';
+
+bool _fromWallpaper(Map<String, dynamic> s) => s['accent'] == _wallpaperAccent;
+
+/// The wallpaper's main colour as a neon: fully saturated and lit, so it
+/// punches like the fixed glows rather than looking faded.
+Color _neon(Color c) {
+  final hsv = HSVColor.fromColor(c);
+  return hsv.withSaturation(math.max(hsv.saturation, 0.8)).withValue(1).toColor();
+}
+
+/// Builds with the glow colour: the chosen neon, or the wallpaper's main
+/// colour as one (cyan while it's unknown or colourless). Follows the
+/// wallpaper when it changes; worked out once per wallpaper and shared.
+class _WithAccent extends StatelessWidget {
+  const _WithAccent({required this.settings, required this.builder});
+
+  final Map<String, dynamic> settings;
+  final Widget Function(Color accent) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_fromWallpaper(settings)) return builder(_accentOf(settings));
+    final image = context.select<WindowBlurPlatform?, ui.Image?>((p) => p?.wallpaper);
+    if (image == null) return builder(_accentOf(settings));
+    return FutureBuilder<List<Color>?>(
+      future: wallpaperColors(image),
+      builder: (context, snap) {
+        final colors = snap.data;
+        return builder(colors == null || colors.isEmpty ? _accentOf(settings) : _neon(colors.first));
+      },
+    );
+  }
+}
 
 class FuturisticClock extends StatefulWidget {
   const FuturisticClock({
@@ -800,7 +843,7 @@ class _SettingsSheet extends StatelessWidget {
     final item = layout.findWidget(id);
     if (item == null) return const SizedBox.shrink();
     final face = _faceOf(item.settings);
-    final accent = _accentOf(item.settings);
+    final chosen = item.settings['accent'] as String? ?? 'cyan';
     final background = clockBackgroundOf(item.settings);
     final style = background?.name ?? clockNoBackground;
     void set(String key, Object value) => layout.updateWidgetSettings(id, {...item.settings, key: value});
@@ -828,7 +871,10 @@ class _SettingsSheet extends StatelessWidget {
                         size: tile,
                         selected: f == face,
                         onTap: () => set('face', f.name),
-                        child: FuturisticClock(face: f, accent: accent, background: background),
+                        child: _WithAccent(
+                          settings: item.settings,
+                          builder: (accent) => FuturisticClock(face: f, accent: accent, background: background),
+                        ),
                       ),
                   ],
                 );
@@ -836,6 +882,13 @@ class _SettingsSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text('Glow', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              chosen == _wallpaperAccent
+                  ? 'From your wallpaper; it changes with it'
+                  : 'The colour of everything that isn\'t white',
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 14,
@@ -843,7 +896,7 @@ class _SettingsSheet extends StatelessWidget {
                 for (final MapEntry(key: name, value: color) in _accents.entries)
                   Semantics(
                     button: true,
-                    selected: color == accent,
+                    selected: name == chosen,
                     label: name,
                     child: GestureDetector(
                       onTap: () => set('accent', name),
@@ -855,7 +908,7 @@ class _SettingsSheet extends StatelessWidget {
                           shape: BoxShape.circle,
                           color: color,
                           border: Border.all(
-                            color: color == accent ? Colors.white : Colors.transparent,
+                            color: name == chosen ? Colors.white : Colors.transparent,
                             width: 3,
                             strokeAlign: BorderSide.strokeAlignOutside,
                           ),
@@ -864,6 +917,37 @@ class _SettingsSheet extends StatelessWidget {
                       ),
                     ),
                   ),
+                // The wallpaper's colour, as a neon.
+                Semantics(
+                  button: true,
+                  selected: chosen == _wallpaperAccent,
+                  label: 'From wallpaper',
+                  child: GestureDetector(
+                    onTap: () {
+                      // Its colour needs the wallpaper image.
+                      context.read<WindowBlurPlatform?>()?.requestWallpaperAccess();
+                      set('accent', _wallpaperAccent);
+                    },
+                    child: _WithAccent(
+                      settings: const {'accent': _wallpaperAccent},
+                      builder: (color) => AnimatedContainer(
+                        duration: TileLook.motion,
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: color,
+                          border: Border.all(
+                            color: chosen == _wallpaperAccent ? Colors.white : Colors.transparent,
+                            width: 3,
+                            strokeAlign: BorderSide.strokeAlignOutside,
+                          ),
+                        ),
+                        child: const Icon(Icons.wallpaper_rounded, size: 18, color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),

@@ -129,6 +129,12 @@ class LauncherPlatform {
   Future<bool> expandQuickSettings() async => await _method.invokeMethod<bool>('expandQuickSettings') ?? false;
 
   /// True if Android currently uses this app as the home screen.
+  /// Dismisses notifications from [packages] as they arrive (and those
+  /// already showing) while [block] is on. Needs notification access.
+  void setHiddenNotifications(bool block, Set<String> packages) {
+    _method.invokeMethod('setHiddenNotifications', {'block': block, 'packages': packages.toList()});
+  }
+
   Future<bool> isDefaultHome() async => await _method.invokeMethod<bool>('isDefaultHome') ?? false;
 
   Future<dynamic> _onNativeCall(MethodCall call) async {
